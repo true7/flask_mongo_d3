@@ -1,0 +1,14 @@
+<!doctype html>
+<head>
+	<link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet"> 
+</head>
+<body>
+{% for item in result %}
+	<p>hello, world)</p>
+	
+	<h5>{{ item.project_name }}</h5>
+	<h5>{{ item.countryname }}</h5>
+	<h5>{{ item.lendprojectcost }}</h5>
+{% endfor %}
+
+</body>
