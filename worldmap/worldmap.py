@@ -1,22 +1,28 @@
 from flask import Flask, render_template
-from flask_pymongo import PyMongo
+from pymongo import MongoClient
+import json
+from bson import json_util
+from bson.json_util import dumps
 
 app = Flask(__name__)
-app.config['MONGO_DBNAME'] = 'world'
-mongo = PyMongo(app)
 
-@app.route('/')
+MONGODB_HOST = 'localhost'
+MONGODB_PORT = 27017
+DBS_NAME = 'world'
+COLLECTION_NAME = 'bank'
+FIELDS = {'project_name': True, 'countryname': True, 'lendprojectcost': True, '_id': False}
+
+@app.route("/")
 def home_page():
-    result = []
-    for row in mongo.db.bank.find():
-        result.append(row)
-    return render_template('layout.html', result=result)
+    connection = MongoClient(MONGODB_HOST, MONGODB_PORT)
+    collection = connection[DBS_NAME][COLLECTION_NAME]
+    projects = collection.find(projection=FIELDS)
+    json_projects = []
+    for project in projects:
+        json_projects.append(project)
+    json_projects = json.dumps(json_projects, default=json_util.default)
+    connection.close()
+    return render_template('layout.html', json_projects=json_projects)
 
-
-
-    # pipeline = [
-    # {'$group': {'_id': { 'city': '$city', 'state':  '$state'}, 'totalPop': { '$sum': '$pop' } } },
-    # {'$match': {'totalPop': { '$gte' : 2000000 } } },
-    # {'$sort': {'totalPop': 1}},
-    # ]
-    # qs = mongo.db.code.aggregate(pipeline=pipeline, useCursor=False)
+if __name__ == "__main__":
+    app.run(host='0.0.0.0',port=5000,debug=True)
