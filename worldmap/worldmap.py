@@ -60,14 +60,16 @@ def home_page():
     # Normalize data for choropleth.
     choropleth_data = []
     for key, val in count.items():
-        lendprojectcost = list(map(int, val[3].split(';')))
+        lendprojectcost = val[3].split(';')
         project_name = val[0].split(';')
-        # projects_and_costs = []
-        # for line in range(len(lendprojectcost)):
-            
-        data = [val[2], lendprojectcost, project_name, val[1], val[4]]
+
+        projects_and_costs = []
+        for line in range(len(lendprojectcost)):
+            string = ' <strong>Project name:</strong> ' + project_name[line] + ', <strong>cost:</strong> ' + lendprojectcost[line]
+            projects_and_costs.append(string)
+
+        data = [val[2], projects_and_costs, val[1], val[4]]
         choropleth_data.append(data)
-        print(data)
 
     connection.close()
     return render_template('layout.html', choropleth_data=choropleth_data)
