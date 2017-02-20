@@ -2,6 +2,7 @@
 
 Don't forget run following command:
 export FLASK_APP=worldmap/worldmap.py
+
 and for development process:
 export FLASK_DEBUG=1
 
