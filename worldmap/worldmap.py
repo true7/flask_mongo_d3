@@ -1,8 +1,8 @@
 from flask import Flask, render_template
 from pymongo import MongoClient
-import json
-from bson import json_util
-from bson.json_util import dumps
+# import json
+# from bson import json_util
+# from bson.json_util import dumps
 
 app = Flask(__name__)
 
@@ -24,29 +24,62 @@ def home_page():
     collection_iso = connection[DBS_NAME_ISO][COLLECTION_NAME_ISO]
     projects_iso = collection_iso.find(projection=FIELDS_ISO)
 
-    # Make a dictionary of country codes in format --> {'2_letters_code': '3_letters_code'}
+    # Make a dictionary of country codes in format --> {'2_letters_code': '3_letters_code'}.
     codes = {}
     for project in projects_iso:
             codes.update(project)
 
     # Preparing data for a choropleth, substitute country codes.
-    # For this map I have to skip 'East Asia and Pacific', 'Pacific Islands', 'Africa', 'World', 'South Asia' 
+    # For this map I had to skip 'East Asia and Pacific', 'Pacific Islands', 'Africa', 'World', 'South Asia' 
     # 'Middle East and North Africa', 'Europe and Central Asia' --> they are not countries, but the whole regions.
-    # I commented out rows with these values.
-    choro_data = []
-    for project in projects:
-        countrycode = codes[project['countrycode']]
-        choro_data.append([project['project_name'], project['countryname'], countrycode, project['lendprojectcost']])
+    # I commented out rows with these values in source JSON file.
+
+    # Count all projects for each country, costs and result cost. After that we don't have more than one row 
+    # for one country and data don't override themselves.
+    count = {}
+    for item in projects:
+        countrycode = codes[item['countrycode']]
+        if not count.get(countrycode) == None:
+
+            # I've decided wrtite code this way to avoid nested lists.
+            project_names = count[countrycode][0]
+            project_names += '; ' + item['project_name']
+            
+            result = count[countrycode][4]
+            result += item['lendprojectcost']
+
+            costs = count[countrycode][3]
+            costs += '; ' + str(item['lendprojectcost'])
+
+            data = [project_names, item['countryname'], countrycode, costs, result]
+            count.update({countrycode: data})
+        else:
+            result = item['lendprojectcost']
+            count[countrycode] = [item['project_name'], item['countryname'], countrycode, str(item['lendprojectcost']), result]
+
+    # Normalize data for choropleth.
+    choropleth_data = []
+    for key, val in count.items():
+        lendprojectcost = list(map(int, val[3].split(';')))
+        project_name = val[0].split(';')
+        # projects_and_costs = []
+        # for line in range(len(lendprojectcost)):
+            
+        data = [val[2], lendprojectcost, project_name, val[1], val[4]]
+        choropleth_data.append(data)
+        print(data)
+
     connection.close()
-    return render_template('layout.html', choro_data=choro_data)
+    return render_template('layout.html', choropleth_data=choropleth_data)
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0',port=5000,debug=True)
 
 
 
 
 
-
-
-
+# DON'T MENTION IT:
 # json format
 # @app.route("/")
 # def home_page():
@@ -59,6 +92,3 @@ def home_page():
 #     json_projects = json.dumps(json_projects, default=json_util.default)
 #     connection.close()
 #     return render_template('layout.html', json_projects=json_projects)
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0',port=5000,debug=True)

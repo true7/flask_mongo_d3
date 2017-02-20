@@ -1,6 +1,9 @@
 #container1 {
-    border:1px dotted blue;
-    width: 700px;
-    height: 475px;
+    width: 1366px;
+    height: 768px;
     position: relative;
+    align-self: center;
+}
+#label {
+	text-align: center;
 }
